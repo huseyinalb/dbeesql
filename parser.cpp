@@ -184,11 +184,13 @@ Table parse_describe(list<string> tokens)
     return table;
 }
 
-void run_describe(Table table)
+string run_describe(Table table)
 {
     list< pair<string, string> >::iterator col_iter = table.column_list.begin();
+    string response;
     while(col_iter != table.column_list.end()) {
-        cout << "colname: " << col_iter->first << " coltype: " << col_iter->second << endl;
+        response += string("colname: ") + col_iter->first + string(" coltype: ") + col_iter->second + "\n";
         col_iter++;
     }
+    return response;
 }

@@ -15,10 +15,11 @@ using namespace std;
 const int max_length = 1024;
 typedef shared_ptr<asio::ip::tcp::socket> socket_ptr;
 
-void process(char* data)
+string process(char* data)
 {
     const std::string str(data);
     list<string> tokens = tokenize(str);
+    string response;
     try {
         if (is_create(tokens)) {
             cout << "creating" << endl;
@@ -28,7 +29,9 @@ void process(char* data)
                 table.suspend();
                 LockMap::get_instance().unlockReadLock(table.table_name);
                 Table table2(table.table_name);
+                response = "OK\n";
             } catch (const char * message) {
+                response = message;
                 cout << message << endl;
             }
         } else if (is_drop(tokens)) {
@@ -38,23 +41,31 @@ void process(char* data)
                 LockMap::get_instance().lockReadLock(table.table_name);
                 table.drop();
                 LockMap::get_instance().unlockReadLock(table.table_name);
+                response = "OK\n";
             } catch (const char * message) {
+                response = message;
                 cout << message << endl;
             }
         } else if (is_describe(tokens)) {
             try {
                 Table table = parse_describe(tokens);
                 LockMap::get_instance().lockWriteLock(table.table_name);
-                run_describe(table);
+                response = run_describe(table);
                 LockMap::get_instance().unlockWriteLock(table.table_name);
             } catch (const char * message) {
+                response = message;
                 cout << message << endl;
             }
-        } else
-            cout << "command does not exist" << endl;
+        } else {
+            string message("command does not exist");
+            response = message;
+            cout << message << endl;
+        }
     } catch (char* message) {
+        response = "internal error";
         cout << "hata ulan" << message << endl;
     }
+    return response;
 }
 
 void session(socket_ptr sock)
@@ -66,7 +77,7 @@ void session(socket_ptr sock)
             char data[max_length];
             
             boost::system::error_code error;
-            size_t length = sock->read_some(boost::asio::buffer(data), error);
+            sock->read_some(boost::asio::buffer(data), error);
             if (error == boost::asio::error::eof)
                 break; // Connection closed cleanly by peer.
             else if (error)
@@ -78,8 +89,9 @@ void session(socket_ptr sock)
                 else
                     data[len-1] = '\0';
             }
-            process(data);
-            boost::asio::write(*sock, boost::asio::buffer(data, length));
+            string response = process(data);
+            size_t length = response.length();
+            boost::asio::write(*sock, boost::asio::buffer(response.c_str(), length));
         }
     }
     catch (std::exception& e)

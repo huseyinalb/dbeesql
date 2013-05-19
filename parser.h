@@ -19,6 +19,6 @@ int is_drop(list<string> tokens);
 Table parse_drop(list<string> tokens);
 int is_describe(list<string> tokens);
 Table parse_describe(list<string> tokens);
-void run_describe(Table table);
+string run_describe(Table table);
 
 #endif /* defined(__dbeesql__parser__) */
