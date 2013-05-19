@@ -4,7 +4,7 @@ dbeesql
 A db server written in cpp
 
 Currently only create table, describe table, drop table is implemented
-Types are not implemented yet, they are only strings that are shown to user
+types are not implemented yet, they are only strings that are shown to user
 
 To try:
 
