@@ -12,6 +12,8 @@
 
 using namespace std;
 using namespace boost;
+
+enum type_ids {INT_TYPE= 1, TEXT_TYPE = 2};
 list<string> tokenize(const string str);
 int is_create(list<string> tokens);
 Table parse_create(list<string> tokens);
