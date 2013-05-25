@@ -9,13 +9,40 @@ int token_match(list<string>::iterator tok_iter, list<string>::iterator tok_end,
         return 0;
 }
 
-//TODO freed when exits?
+// TODO freed when exits?
+// TODO should check if alnum etc
 int is_ident(list<string>::iterator tok_iter, list<string>::iterator tok_end)
 {
     if (tok_iter == tok_end)
         return 0;
     else
         return 1;
+}
+
+int token_list_match(list<string>::iterator tok_iter, list<string>::iterator tok_end, ColumnListType match_list)
+{
+    for (ColumnListType::iterator match_iter = match_list.begin(); match_iter != match_list.end(); match_iter++) {
+        if(tok_iter != tok_end && (*tok_iter).compare((*match_iter).first) == 0)
+            return (*match_iter).second;
+    }
+    return 0;
+}
+
+ColumnListType get_types()
+{
+    static ColumnListType type_list;
+    if (type_list.size() == 0) {
+        type_list.push_front(pair<string, int>("int", INT_TYPE));
+        type_list.push_front(pair<string, int>("text", TEXT_TYPE));
+    }
+    return type_list;
+}
+
+int get_type(list<string>::iterator tok_iter, list<string>::iterator tok_end)
+{
+
+    token_list_match(tok_iter, tok_end,
+                      get_types());
 }
 
 int is_ophar(list<string>::iterator tok_iter, list<string>::iterator tok_end)
@@ -71,9 +98,10 @@ int is_create(list<string> tokens)
 
 Table parse_create(list<string> tokens)
 {
+    // ignores if column_type and column_name is given wrong, should be fixed
     // TODO If already created
     std::string table_name;
-    list< pair<std::string, std::string> > column_list;
+    ColumnListType column_list;
     list<string>::iterator tok_iter = tokens.begin();
     try {
         // is_create
@@ -86,20 +114,19 @@ Table parse_create(list<string> tokens)
         if (!is_ophar(tok_iter, tokens.end()))
             throw "ophar";
         std::string column_name;
-        std::string column_type;
+        int column_type;
         do {
             tok_iter++;
-            if(tok_iter != tokens.end()) {
+            if(is_ident(tok_iter, tokens.end())) {
                 column_name = *tok_iter;
             } else
                 break;
             tok_iter++;
-            if (tok_iter != tokens.end()) {
-                column_type = *tok_iter;
-            } else
+            column_type = get_type(tok_iter, tokens.end());
+            if (column_type == 0)
                 break;
             tok_iter++;
-            pair<std::string, std::string> column(column_name, column_type);
+            pair<std::string, int> column(column_name, column_type);
             cout << column_name << ":" << column_type << endl;
             column_list.push_front(column);
             if (is_cphar(tok_iter, tokens.end()))
@@ -186,11 +213,11 @@ Table parse_describe(list<string> tokens)
 
 string run_describe(Table table)
 {
-    list< pair<string, string> >::iterator col_iter = table.column_list.begin();
-    string response;
+    ColumnListType::iterator col_iter = table.column_list.begin();
+    stringstream response;
     while(col_iter != table.column_list.end()) {
-        response += string("colname: ") + col_iter->first + string(" coltype: ") + col_iter->second + "\n";
+        response << "colname: " << col_iter->first << " coltype: " << col_iter->second << endl;
         col_iter++;
     }
-    return response;
+    return response.str();
 }
