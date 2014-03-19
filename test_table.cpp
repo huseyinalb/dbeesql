@@ -1,5 +1,6 @@
 #include "test_table.h"
 #include "table.h"
+#include "condition.h"
 #include <list>
 #include <assert.h>
 
@@ -26,8 +27,12 @@ int main(){
     values.push_back(val1);
     table.insert(values);
     table.suspend_content();
-    table.fetch_content();
-    list< list < void* > >::iterator val_it= table.values.begin();
+    
+    
+    Table table2("test_table");
+    table2.fetch_content();
+    cout << table2.values.front().size() << endl;
+    list< list < void* > >::iterator val_it= table2.values.begin();
     string* first_val = (string*)val_it->front();
     assert(!first_val->compare("val2"));
     val_it->pop_front();
@@ -35,4 +40,22 @@ int main(){
     val_it->pop_front();
     assert((*sec_val) == 1);
     assert(val_it->size() == 0);
+    
+    table2.fetch_content();
+    cout << table2.values.front().size() << endl;
+    assert(table2.values.front().size() == 2);
+    Condition condition1;
+    
+    condition1.value = "val2";
+    condition1.condition = EQUALS;
+    condition1.column_name = "name";
+    list<Condition> conditions;
+    conditions.push_back(condition1);
+    list< list<void*> > rows = table2.filter(conditions);
+    assert(rows.size() == 1);
+    val_it= rows.begin();
+    first_val = (string*)val_it->front();
+    assert(!first_val->compare("val2"));
+    sec_val = (int*)val_it->back();
+    assert(*sec_val == 1);
 }

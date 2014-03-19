@@ -1,6 +1,5 @@
 
 #include "parser.h"
-#include "query.h"
 #include <stdlib.h>
 
 int token_match(list<string>::iterator tok_iter, list<string>::iterator tok_end, string str)
@@ -62,6 +61,13 @@ int is_cphar(list<string>::iterator tok_iter, list<string>::iterator tok_end)
     return token_match(tok_iter, tok_end, string(")"));
 }
 
+int is_condition(list<string>::iterator tok_iter, list<string>::iterator tok_end)
+{
+    return token_match(tok_iter, tok_end, string("="))
+    || token_match(tok_iter, tok_end, string(">"))
+    || token_match(tok_iter, tok_end, string("<"));
+}
+
 int is_comma(list<string>::iterator tok_iter, list<string>::iterator tok_end)
 {
     return token_match(tok_iter, tok_end, string(","));
@@ -75,7 +81,7 @@ int is_semicolon(list<string>::iterator tok_iter, list<string>::iterator tok_end
 list<string> tokenize(const string str)
 {
     // TODO will be refactored
-    boost::regex patterns("([A-Za-z_]+|[0-9]+|\\s+|,|\\(|\\)|;|\\*)");
+    boost::regex patterns("([A-Za-z_][A-Za-z0-9_]+|[0-9]+|\\s+|,|\\(|\\)|;|\\*|=|\\>|\\<)");
     boost::match_results<std::string::const_iterator> what;
     boost::match_flag_type flags = boost::match_default;
     std::string::const_iterator start = str.begin();
@@ -181,9 +187,10 @@ int is_select(list<string> tokens)
     return 1;
 }
 
-Table parse_select(list<string> tokens) {
+pair< Table, list<Condition> > parse_select(list<string> tokens) {
     std::string table_name;
     ColumnListType column_list;
+    list<Condition> conditions;
     list<string>::iterator tok_iter = tokens.begin();
     // is_select
     tok_iter++;
@@ -197,9 +204,38 @@ Table parse_select(list<string> tokens) {
         throw("no table name");
     table_name = *tok_iter;
     tok_iter++;
+    if (token_match(tok_iter, tokens.end(), "where")) {
+        do {
+            tok_iter++;
+            Condition condition;
+            if(is_ident(tok_iter, tokens.end())) {
+                condition.column_name = *tok_iter;
+            } else
+                throw "waiting for a column name";
+            cout << condition.column_name << endl;
+            tok_iter++;
+            if(is_condition(tok_iter, tokens.end())) {
+                if (*tok_iter == "=")
+                    condition.condition = EQUALS;
+                else if (*tok_iter == ">")
+                    condition.condition = BIGGER;
+                else if (*tok_iter == "<")
+                    condition.condition = SMALLER;
+            } else
+                throw "waiting for a condition";
+            tok_iter++;
+            if(is_ident(tok_iter, tokens.end())) {
+                condition.value = *tok_iter;
+            } else
+                throw "waiting for a condition value";
+            cout << condition.column_name << endl;
+            tok_iter++;
+            conditions.push_back(condition);
+        } while (is_comma(tok_iter, tokens.end()));
+    }
     if(!is_semicolon(tok_iter, tokens.end()))
        throw("no semicolumn");
-    return Table(table_name);
+    return pair< Table, list<Condition> >(Table(table_name), conditions);
 }
 
 Table parse_create(list<string> tokens)
@@ -319,6 +355,90 @@ Table parse_describe(list<string> tokens)
     return table;
 }
 
+int is_update(list<string> tokens) {
+    list<string>::iterator tok_iter = tokens.begin();
+    if (!token_match(tok_iter, tokens.end(), "update"))
+        return 0;
+    return 1;
+}
+
+UpdateQuery parse_update(list<string> tokens) {
+    std::string table_name;
+    ColumnListType column_list;
+    list<Condition> conditions;
+    list<SetAction> setActions;
+    list<string>::iterator tok_iter = tokens.begin();
+    // is_update
+    tok_iter++;
+    if (!is_ident(tok_iter, tokens.end()))
+        throw("no table name");
+    table_name = *tok_iter;
+    tok_iter++;
+    if (!token_match(tok_iter, tokens.end(), "set"))
+        throw "set keyword expected";
+    do {
+        tok_iter++;
+        SetAction setAction;
+        if(is_ident(tok_iter, tokens.end())) {
+            setAction.column_name = *tok_iter;
+        } else
+            throw "waiting for a column name";
+        cout << setAction.column_name << endl;
+        tok_iter++;
+        if(!token_match(tok_iter, tokens.end(), "="))
+            throw "waiting for \"=\"";
+        tok_iter++;
+        if(is_ident(tok_iter, tokens.end())) {
+            setAction.value = *tok_iter;
+        } else
+            throw "waiting for a value";
+        cout << setAction.column_name << endl;
+        tok_iter++;
+        setActions.push_back(setAction);
+    } while (is_comma(tok_iter, tokens.end()));
+    
+    if (token_match(tok_iter, tokens.end(), "where")) {
+        do {
+            tok_iter++;
+            Condition condition;
+            if(is_ident(tok_iter, tokens.end())) {
+                condition.column_name = *tok_iter;
+            } else
+                throw "waiting for a column name";
+            cout << condition.column_name << endl;
+            tok_iter++;
+            if(is_condition(tok_iter, tokens.end())) {
+                if (*tok_iter == "=")
+                    condition.condition = EQUALS;
+                else if (*tok_iter == ">")
+                    condition.condition = BIGGER;
+                else if (*tok_iter == "<")
+                    condition.condition = SMALLER;
+            } else
+                throw "waiting for a condition";
+            tok_iter++;
+            if(is_ident(tok_iter, tokens.end())) {
+                condition.value = *tok_iter;
+            } else
+                throw "waiting for a condition value";
+            cout << condition.column_name << endl;
+            tok_iter++;
+            conditions.push_back(condition);
+        } while (is_comma(tok_iter, tokens.end()));
+    }
+    if(!is_semicolon(tok_iter, tokens.end()))
+        throw("no semicolumn");
+    Table table(table_name);
+    return UpdateQuery(table, conditions, setActions);
+}
+
+string run_update(Table table, list<Condition> conditions, list<SetAction> setActions)
+{
+    string response = table.update(conditions, setActions);
+    table.suspend_content();
+    return response;
+}
+
 string run_describe(Table table)
 {
 
@@ -334,8 +454,9 @@ string run_insert(list<string> values, string table_name)
     return response.str();
 }
 
-string run_select(Table table)
+string run_select(Table table, list<Condition> conditions)
 {
     table.fetch_content();
-    return table.select();
+    list< list<void*> > rows = table.filter(conditions);
+    return table.print_rows(rows);
 }

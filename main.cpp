@@ -69,16 +69,27 @@ string process(char* data)
             }
         } else if (is_select(tokens)){
             try {
-                Table table = parse_select(tokens);
+                pair< Table, list<Condition> > res = parse_select(tokens);
+                Table table = res.first;
                 LockMap::get_instance().lockReadLock(table.table_name);
-                response = run_select(table);
+                response = run_select(table, res.second);
                 LockMap::get_instance().unlockReadLock(table.table_name);
             } catch (const char * message) {
                 response = message;
                 cout << message << endl;
             }
-        }
-         else {
+        } else if (is_update(tokens)){
+            try {
+                UpdateQuery query = parse_update(tokens);
+                Table table = query.table;
+                LockMap::get_instance().lockReadLock(table.table_name);
+                response = run_update(table, query.conditions, query.setActions);
+                LockMap::get_instance().unlockReadLock(table.table_name);
+            } catch (const char * message) {
+                response = message;
+                cout << message << endl;
+            }
+        } else {
             string message("command does not exist");
             response = message;
             cout << message << endl;

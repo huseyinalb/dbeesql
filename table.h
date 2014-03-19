@@ -8,6 +8,9 @@
 #include <fstream>
 #include <cstdio>
 #include <sstream>
+#include "condition.h"
+#include <cstdlib>
+#include "set_actions.h"
 
 using namespace std;
 
@@ -28,7 +31,9 @@ public:
     void create();
     void insert(list<string> values);
     string describe();
-    string select();
+    list< list< void* > > filter(list<Condition> conditions);
+    string update(list<Condition> conditions, list<SetAction> setActions);
+    string print_rows(list< list< void* > >);
     ~Table();
     void suspend_content();
     int drop();

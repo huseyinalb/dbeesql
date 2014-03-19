@@ -17,12 +17,40 @@ int main(){
 
     tokens = tokenize("select * from table_test;");
     try {
-        Table table = parse_select(tokens);
+        pair< Table, list<Condition> > res = parse_select(tokens);
+        Table table = res.first;
         assert(!table.table_name.compare("table_test"));
-        string response = run_select(table);
+        string response = run_select(table, res.second);
         cout << response << endl;
         assert(table.values.size() == 0);
+                table.table_name = "2";
     } catch (const char * message) {
         cout << message << endl;
     }
+    tokens = tokenize("update table_test set name = deneme1 where name = deneme;");
+    try {
+        UpdateQuery updateQuery = parse_update(tokens);
+        Table table = updateQuery.table;
+        assert(!table.table_name.compare("table_test"));
+        table.fetch_content();
+        string response = run_update(table, updateQuery.conditions, updateQuery.setActions);
+        cout << response << endl;
+        table.table_name = "3";
+    } catch (const char * message) {
+        cout << message << endl;
+    }
+/*    tokens = tokenize("select * from table_test where name = deneme1;");
+    try {
+        pair< Table, list<Condition> > res = parse_select(tokens);
+        Table table = res.first;
+        assert(!table.table_name.compare("table_test"));
+        table.fetch_content();
+        string response = run_select(table, res.second);
+        cout << response << endl;
+        assert(table.values.size() == 1);
+    } catch (const char * message) {
+        cout << message << endl;
+    }
+  */
+    
 }
