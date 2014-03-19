@@ -14,7 +14,7 @@ make
 
 ./dbeesql 8080
 
-echo "create table hede(name text, num integer);"| nc localhost 8080
+echo "create table hede(name text, num int);"| nc localhost 8080
 
 echo "describe table hede;"| nc localhost 8080
 
