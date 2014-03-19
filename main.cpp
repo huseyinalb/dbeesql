@@ -26,9 +26,8 @@ string process(char* data)
             try {
                 Table table = parse_create(tokens);
                 LockMap::get_instance().lockReadLock(table.table_name);
-                table.suspend();
+                table.create();
                 LockMap::get_instance().unlockReadLock(table.table_name);
-                Table table2(table.table_name);
                 response = "OK\n";
             } catch (const char * message) {
                 response = message;
@@ -56,7 +55,30 @@ string process(char* data)
                 response = message;
                 cout << message << endl;
             }
-        } else {
+        } else if (is_insert(tokens)) {
+            try {
+                pair< list<string>, string> res = parse_insert(tokens);
+                list<string> values = res.first;
+                string table_name = res.second;
+                LockMap::get_instance().lockWriteLock(table_name);
+                response = run_insert(values, table_name);
+                LockMap::get_instance().unlockWriteLock(table_name);
+            } catch (const char * message) {
+                response = message;
+                cout << message << endl;
+            }
+        } else if (is_select(tokens)){
+            try {
+                Table table = parse_select(tokens);
+                LockMap::get_instance().lockReadLock(table.table_name);
+                response = run_select(table);
+                LockMap::get_instance().unlockReadLock(table.table_name);
+            } catch (const char * message) {
+                response = message;
+                cout << message << endl;
+            }
+        }
+         else {
             string message("command does not exist");
             response = message;
             cout << message << endl;
