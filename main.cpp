@@ -88,12 +88,12 @@ string process(char* data)
         } else if (is_remove(tokens)){
             query = parse_remove(tokens);
             try {
-                LockMap::get_instance().lockWriteLock(query->table_name);
+                LockMap::get_instance().lockReadLock(query->table_name);
                 Table table(query->table_name);
                 response = run_remove(table, query);
-                LockMap::get_instance().unlockWriteLock(table.table_name);
+                LockMap::get_instance().unlockReadLock(table.table_name);
             } catch (const char * message) {
-                LockMap::get_instance().unlockWriteLock(query->table_name);
+                LockMap::get_instance().unlockReadLock(query->table_name);
                 response = message;
                 cout << message << endl;
             }
