@@ -18,7 +18,7 @@ list<string> tokenize(const string str);
 int is_create(list<string> tokens);
 Table parse_create(list<string> tokens);
 int is_drop(list<string> tokens);
-Table parse_drop(list<string> tokens);
+string parse_drop(list<string> tokens);
 int is_describe(list<string> tokens);
 Query* parse_insert(list<string> tokens);
 int is_insert(list<string> tokens);

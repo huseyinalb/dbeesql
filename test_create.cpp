@@ -8,11 +8,9 @@ int main(){
     ColumnListType::iterator iter = table.column_list.begin();
     assert(!(*iter).first.compare("name"));
     assert((*iter).second == 2);
-    cout << "first column OK" << endl;
     iter++;
     assert(!(*iter).first.compare("num"));
     assert((*iter).second == 1);
-    cout << "second column OK" << endl;
     table.create();
     
     tokens = tokenize("describe table table_test;");
@@ -21,9 +19,7 @@ int main(){
     assert(table.column_list.size() == 2);
     assert(!(*iter).first.compare("name"));
     assert((*iter).second == 2);
-    cout << "first column OK" << endl;
     iter++;
     assert(!(*iter).first.compare("num"));
     assert((*iter).second == 1);
-    cout << "second column OK" << endl;
 }

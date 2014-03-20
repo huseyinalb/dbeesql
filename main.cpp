@@ -22,7 +22,6 @@ string process(char* data)
     string response;
     try {
         if (is_create(tokens)) {
-            cout << "creating" << endl;
             try {
                 Table table = parse_create(tokens);
                 LockMap::get_instance().lockReadLock(table.table_name);
@@ -34,10 +33,10 @@ string process(char* data)
                 cout << message << endl;
             }
         } else if (is_drop(tokens)) {
-            cout << "dropping" << endl;
             try {
-                Table table = parse_drop(tokens);
-                LockMap::get_instance().lockReadLock(table.table_name);
+                string table_name = parse_drop(tokens);
+                LockMap::get_instance().lockReadLock(table_name);
+                Table table(table_name);
                 table.drop();
                 LockMap::get_instance().unlockReadLock(table.table_name);
                 response = "OK\n";
@@ -58,11 +57,12 @@ string process(char* data)
         } else if (is_insert(tokens)) {
             try {
                 Query *query = parse_insert(tokens);
-                list<string*> *values = query->insert_values;
-                Table table(query->table_name);
                 LockMap::get_instance().lockWriteLock(query->table_name);
-                response = run_insert(table, query);
+                Table table(query->table_name);
                 LockMap::get_instance().unlockWriteLock(query->table_name);
+                LockMap::get_instance().lockReadLock(query->table_name);
+                response = run_insert(table, query);
+                LockMap::get_instance().unlockReadLock(query->table_name);
             } catch (const char * message) {
                 response = message;
                 cout << message << endl;
@@ -70,10 +70,10 @@ string process(char* data)
         } else if (is_select(tokens)){
             try {
                 Query *query = parse_select(tokens);
+                LockMap::get_instance().lockWriteLock(query->table_name);
                 Table table(query->table_name);
-                LockMap::get_instance().lockReadLock(table.table_name);
                 response = run_select(table, query);
-                LockMap::get_instance().unlockReadLock(table.table_name);
+                LockMap::get_instance().unlockWriteLock(table.table_name);
                 delete query;
             } catch (const char * message) {
                 response = message;
@@ -82,10 +82,12 @@ string process(char* data)
         } else if (is_update(tokens)){
             try {
                 Query *query = parse_update(tokens);
+                LockMap::get_instance().lockWriteLock(query->table_name);
                 Table table(query->table_name);
-                LockMap::get_instance().lockWriteLock(table.table_name);
-                response = run_update(table, query);
                 LockMap::get_instance().unlockWriteLock(table.table_name);
+                LockMap::get_instance().lockReadLock(table.table_name);
+                response = run_update(table, query);
+                LockMap::get_instance().unlockReadLock(table.table_name);
                 delete query;
             } catch (const char * message) {
                 response = message;
@@ -117,7 +119,7 @@ void session(socket_ptr sock)
                 break; // Connection closed cleanly by peer.
             else if (error)
                 throw boost::system::system_error(error); // Some other error.
-            int len = strlen(data);
+            size_t len = strlen(data);
             if (data[len-1] == '\n') {
                 if (len > 1 && data[len-2] == '\r')
                     data[len-2] = '\0';

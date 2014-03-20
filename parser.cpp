@@ -7,10 +7,12 @@ int token_match(list<string>::iterator tok_iter, list<string>::iterator tok_end,
     if (tok_iter != tok_end && (*tok_iter).compare(str) == 0)
         return 1;
     else {
+        #ifdef DEBUG
         if (tok_iter != tok_end) {
             cout << "expected: " << str << endl;
             cout << "got: " << *tok_iter << endl;
         }
+        #endif
         return 0;
     }
 }
@@ -21,10 +23,12 @@ int is_ident(list<string>::iterator tok_iter, list<string>::iterator tok_end)
     if (tok_iter != tok_end && (*tok_iter).size() > 0 && isalpha((*tok_iter)[0]))
         return 1;
     else {
+        #ifdef DEBUG
         if (tok_iter != tok_end) {
             cout << "expected: identifier"<< endl;
             cout << "got: " << *tok_iter << endl;
         }
+        #endif
         return 0;
     }
 }
@@ -33,10 +37,12 @@ int is_num(list<string>::iterator tok_iter, list<string>::iterator tok_end) {
     if (tok_iter != tok_end && (*tok_iter).size() > 0 && isnumber((*tok_iter)[0]))
         return 1;
     else {
+        #ifdef DEBUG
         if (tok_iter != tok_end) {
             cout << "expected: num"<< endl;
             cout << "got: " << *tok_iter << endl;
         }
+        #endif
         return 0;
     }
 }
@@ -65,10 +71,12 @@ int is_text(list<string>::iterator tok_iter, list<string>::iterator tok_end) {
     if (tok_iter != tok_end && (*tok_iter).size() > 1 && (*tok_iter)[0] == '\"')
         return 1;
     else {
+        #ifdef DEBUG
         if (tok_iter != tok_end) {
             cout << "expected: text" << endl;
             cout << "got: " << *tok_iter << endl;
         }
+        #endif
         return 0;
     }
 }
@@ -117,7 +125,9 @@ list<string> tokenize(const string str)
     while(boost::regex_search(start, str.end(), what, patterns, flags)) {
         boost::match_results<std::string::const_iterator> results;
         if (!boost::regex_match(string(what[1]), results, boost::regex("\\s+"))) {
+            #ifdef DEBUG
             cout << ":" << (what[1]) << ":"<< endl;
+            #endif
             tokens.push_back(what[0]);
         }
         start = what[0].second;
@@ -159,7 +169,9 @@ list<Condition*>* parse_where(list<string>::iterator& tok_iter, list<string>::it
                 condition->column_name = *tok_iter;
             } else
                 throw "waiting for a column name";
+            #ifdef DEBUG
             cout << condition->column_name << endl;
+            #endif
             tok_iter++;
             if(is_condition(tok_iter, tok_end)) {
                 if (*tok_iter == "=")
@@ -178,7 +190,9 @@ list<Condition*>* parse_where(list<string>::iterator& tok_iter, list<string>::it
             } else {
                 break;
             }
+            #ifdef DEBUG
             cout << condition->column_name << endl;
+            #endif
             tok_iter++;
             conditions->push_back(condition);
         } while (is_comma(tok_iter, tok_end));
@@ -213,14 +227,11 @@ Query* parse_insert(list<string> tokens)
             string *column_value;
             if(is_text(tok_iter, tokens.end())) {
                 column_value = new string((*tok_iter).substr(1, (*tok_iter).size()-2));
-                cout << "asdadssda" << endl;
             } else if (is_num(tok_iter, tokens.end())){
                 column_value = new string(*tok_iter);
-                cout << "asdadssda" << endl;
             } else {
                 break;
             }
-            cout << *column_value << endl;
             insert_values->push_back(column_value);
             tok_iter++;
         } while (is_comma(tok_iter, tokens.end()));
@@ -230,7 +241,9 @@ Query* parse_insert(list<string> tokens)
         if (!is_semicolon(tok_iter, tokens.end()))
             throw "semicolon";
     } catch (const char* message) {
-        cout << "hata ulan" << message << endl;
+        #ifdef DEBUG
+        cout << "error:" << message << endl;
+        #endif
         throw "could not parse";
     }
     return new Query(table_name, insert_values);
@@ -298,7 +311,9 @@ Table parse_create(list<string> tokens)
                 throw "unidentified type";
             tok_iter++;
             pair<std::string, int> column(column_name, column_type);
+            #ifdef DEBUG
             cout << column_name << ":" << column_type << endl;
+            #endif
             column_list.push_back(column);
         } while (is_comma(tok_iter, tokens.end()));
         if (!is_cphar(tok_iter, tokens.end()))
@@ -307,9 +322,10 @@ Table parse_create(list<string> tokens)
         if (!is_semicolon(tok_iter, tokens.end()))
             throw "semicolon";
     } catch (const char* message) {
-        
+        #ifdef DEBUG
         cout << *tok_iter;
         cout << "hata ulan " << message << endl;
+        #endif
         throw "could not parse";
     }
     Table table(table_name, column_list);
@@ -328,7 +344,7 @@ int is_drop(list<string> tokens)
     return 1;
 }
 
-Table parse_drop(list<string> tokens)
+string parse_drop(list<string> tokens)
 {
     std::string table_name;
     list<string>::iterator tok_iter = tokens.begin();
@@ -343,11 +359,12 @@ Table parse_drop(list<string> tokens)
         if (!is_semicolon(tok_iter, tokens.end()))
             throw "semicolon";
     } catch (const char* message) {
+        #ifdef DEBUG
         cout << "hata ulan" << message << endl;
+        #endif
         throw "could not parse";
     }
-    Table table(table_name);
-    return table;
+    return table_name;
 }
 
 int is_describe(list<string> tokens)
@@ -377,7 +394,9 @@ Table parse_describe(list<string> tokens)
         if (!is_semicolon(tok_iter, tokens.end()))
             throw "semicolon";
     } catch (const char* message) {
+        #ifdef DEBUG
         cout << "hata ulan" << message << endl;
+        #endif
         throw "could not parse";
     }
     Table table(table_name);
@@ -412,7 +431,6 @@ Query *parse_update(list<string> tokens) {
             setAction->column_name = *tok_iter;
         } else
             throw "waiting for a column name";
-        cout << setAction->column_name << endl;
         tok_iter++;
         if(!token_match(tok_iter, tokens.end(), "="))
             throw "waiting for \"=\"";
@@ -424,7 +442,6 @@ Query *parse_update(list<string> tokens) {
         } else {
             break;
         }
-        cout << setAction->column_name << endl;
         tok_iter++;
         setActions->push_back(setAction);
     } while (is_comma(tok_iter, tokens.end()));

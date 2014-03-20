@@ -3,18 +3,18 @@
 
 int main(){
     try {
-    list<string> tokens = tokenize("insert into table_test values(\"some value\", 1);");
-    Query *query = parse_insert(tokens);
-    list<string*> *values = query->insert_values;
-    assert(!query->table_name.compare("table_test"));
-    list<string*>::iterator iter = values->begin();
-    assert(!(*iter)->compare("some value"));
-    iter++;
+        list<string> tokens = tokenize("insert into table_test values(\"some value\", 1);");
+        Query *query = parse_insert(tokens);
+        list<string*> *values = query->insert_values;
+        assert(!query->table_name.compare("table_test"));
+        list<string*>::iterator iter = values->begin();
+        assert(!(*iter)->compare("some value"));
+        iter++;
     
-    assert(!(*iter)->compare("1"));
-    Table table(query->table_name);
-    run_insert(table, query);
-    delete query;
+        assert(!(*iter)->compare("1"));
+        Table table(query->table_name);
+        run_insert(table, query);
+        delete query;
     } catch (const char* message) {
         cout << message << endl;
     }

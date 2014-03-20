@@ -31,7 +31,6 @@ int main(){
     
     Table table2("test_table");
     table2.fetch_content();
-    cout << table2.values.front().size() << endl;
     list< list < void* > >::iterator val_it= table2.values.begin();
     string* first_val = (string*)val_it->front();
     assert(!first_val->compare("val2"));
@@ -42,7 +41,6 @@ int main(){
     assert(val_it->size() == 0);
     
     table2.fetch_content();
-    cout << table2.values.front().size() << endl;
     assert(table2.values.front().size() == 2);
     Condition *condition1= new Condition;
     
