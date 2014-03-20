@@ -455,6 +455,7 @@ Query *parse_update(list<string> tokens) {
 
 string run_update(Table& table, Query* query)
 {
+    table.fetch_content();
     string response = table.update(query->conditions, query->setActions);
     table.suspend_content();
     return response;
@@ -462,13 +463,13 @@ string run_update(Table& table, Query* query)
 
 string run_describe(Table& table)
 {
-
     return table.describe();
 }
        
 string run_insert(Table& table, Query *query)
 {
     stringstream response;
+    table.fetch_content();
     table.insert(query->insert_values);
     table.suspend_content();
     return response.str();

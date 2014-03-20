@@ -20,43 +20,47 @@ string process(char* data)
     const std::string str(data);
     list<string> tokens = tokenize(str);
     string response;
+    Query *query = (Query*)0;
     try {
         if (is_create(tokens)) {
+            Table table = parse_create(tokens);
             try {
-                Table table = parse_create(tokens);
                 LockMap::get_instance().lockReadLock(table.table_name);
                 table.create();
                 LockMap::get_instance().unlockReadLock(table.table_name);
                 response = "OK\n";
             } catch (const char * message) {
+                LockMap::get_instance().unlockReadLock(table.table_name);
                 response = message;
                 cout << message << endl;
             }
         } else if (is_drop(tokens)) {
+            string table_name = parse_drop(tokens);
             try {
-                string table_name = parse_drop(tokens);
                 LockMap::get_instance().lockReadLock(table_name);
                 Table table(table_name);
                 table.drop();
                 LockMap::get_instance().unlockReadLock(table.table_name);
                 response = "OK\n";
             } catch (const char * message) {
+                LockMap::get_instance().unlockReadLock(table_name);
                 response = message;
                 cout << message << endl;
             }
         } else if (is_describe(tokens)) {
+            Table table = parse_describe(tokens);
             try {
-                Table table = parse_describe(tokens);
                 LockMap::get_instance().lockWriteLock(table.table_name);
                 response = run_describe(table);
                 LockMap::get_instance().unlockWriteLock(table.table_name);
             } catch (const char * message) {
+                LockMap::get_instance().unlockWriteLock(table.table_name);
                 response = message;
                 cout << message << endl;
             }
         } else if (is_insert(tokens)) {
+            query = parse_insert(tokens);
             try {
-                Query *query = parse_insert(tokens);
                 LockMap::get_instance().lockWriteLock(query->table_name);
                 Table table(query->table_name);
                 LockMap::get_instance().unlockWriteLock(query->table_name);
@@ -64,32 +68,35 @@ string process(char* data)
                 response = run_insert(table, query);
                 LockMap::get_instance().unlockReadLock(query->table_name);
             } catch (const char * message) {
+                LockMap::get_instance().unlockWriteLock(query->table_name);
+                LockMap::get_instance().unlockReadLock(query->table_name);
                 response = message;
                 cout << message << endl;
             }
         } else if (is_select(tokens)){
+            query = parse_select(tokens);
             try {
-                Query *query = parse_select(tokens);
                 LockMap::get_instance().lockWriteLock(query->table_name);
                 Table table(query->table_name);
                 response = run_select(table, query);
                 LockMap::get_instance().unlockWriteLock(table.table_name);
-                delete query;
             } catch (const char * message) {
+                LockMap::get_instance().unlockWriteLock(query->table_name);
                 response = message;
                 cout << message << endl;
             }
         } else if (is_update(tokens)){
+            query = parse_update(tokens);
             try {
-                Query *query = parse_update(tokens);
                 LockMap::get_instance().lockWriteLock(query->table_name);
                 Table table(query->table_name);
                 LockMap::get_instance().unlockWriteLock(table.table_name);
                 LockMap::get_instance().lockReadLock(table.table_name);
                 response = run_update(table, query);
                 LockMap::get_instance().unlockReadLock(table.table_name);
-                delete query;
             } catch (const char * message) {
+                LockMap::get_instance().unlockWriteLock(query->table_name);
+                LockMap::get_instance().unlockReadLock(query->table_name);
                 response = message;
                 cout << message << endl;
             }
@@ -98,10 +105,13 @@ string process(char* data)
             response = message;
             cout << message << endl;
         }
+    
     } catch (char* message) {
         response = "internal error";
         cout << "hata ulan" << message << endl;
     }
+    if (query)
+        delete query;
     return response;
 }
 

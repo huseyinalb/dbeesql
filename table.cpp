@@ -41,6 +41,8 @@ void Table::create() {
     of.close();
     // opening content file
     ofstream of2((this->table_name + ".cnt").c_str());
+    size_t values_count = 0;
+    of2.write((char*)&values_count, sizeof(size_t));
     of2.close();
 }
 
@@ -305,8 +307,8 @@ string Table::update(list<Condition*> *conditions, list<SetAction*> *setActions)
 
 int Table::drop() {
     // TODO error detection
-    return remove((this->table_name+".clm").c_str());
-    return remove((this->table_name+".cnt").c_str());
+    int first = remove((this->table_name+".clm").c_str());
+    return remove((this->table_name+".cnt").c_str()) * first;
 }
 
 Table::~Table() {
