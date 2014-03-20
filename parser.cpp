@@ -15,14 +15,18 @@ int token_match(list<string>::iterator tok_iter, list<string>::iterator tok_end,
     }
 }
 
-// TODO freed when exits?
-// TODO should check if alnum etc
+// tokenizer checks the patterns, so no need to check all of the characters
 int is_ident(list<string>::iterator tok_iter, list<string>::iterator tok_end)
 {
-    if (tok_iter == tok_end)
-        return 0;
-    else
+    if (tok_iter != tok_end && (*tok_iter).size() > 0 && isalpha((*tok_iter)[0]))
         return 1;
+    else {
+        if (tok_iter != tok_end) {
+            cout << "expected: identifier"<< endl;
+            cout << "got: " << *tok_iter << endl;
+        }
+        return 0;
+    }
 }
 
 int is_num(list<string>::iterator tok_iter, list<string>::iterator tok_end) {
