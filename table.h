@@ -29,10 +29,10 @@ public:
     Table(string table_name, ColumnListType column_list);
     void fetch_content();
     void create();
-    void insert(list<string> values);
+    void insert(list<string*>* values);
     string describe();
-    list< list< void* > > filter(list<Condition> conditions);
-    string update(list<Condition> conditions, list<SetAction> setActions);
+    list< list< void* > > filter(list<Condition*> *conditions);
+    string update(list<Condition*> *conditions, list<SetAction*> *setActions);
     string print_rows(list< list< void* > >);
     ~Table();
     void suspend_content();

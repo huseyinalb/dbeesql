@@ -106,19 +106,19 @@ void Table::fetch_content() {
     if2.close();
 }
 
-void Table::insert(list<string> values) {
+void Table::insert(list<string*>* values) {
     ColumnListType::iterator col_iter = this->column_list.begin();
-    list<string>::iterator val_iter = values.begin();
+    list<string*>::iterator val_iter = values->begin();
     list<void*> row;
-    while(col_iter != this->column_list.end() && val_iter != values.end()) {
-        string val = (*val_iter);
+    while(col_iter != this->column_list.end() && val_iter != values->end()) {
+        string *val = (*val_iter);
         if (col_iter->second == TEXT_TYPE) {
-            cout << "insert col type: text, val: " << val << endl;
-            row.push_back(new string(val));
+            cout << "insert col type: text, val: " << *val << endl;
+            row.push_back(new string(*val));
         } else if (col_iter->second == INT_TYPE) {
             // TODO non integer value
-            cout << "insert col type: int, val: " << val << endl;
-            int num = atoi(val.c_str());
+            cout << "insert col type: int, val: " << *val << endl;
+            int num = atoi((*val).c_str());
             row.push_back(new int(num));
         } else
             throw "Type error";
@@ -170,33 +170,33 @@ string Table::describe() {
     return response.str();
 }
 
-list< list<void*> > Table::filter(list<Condition> conditions) {
+list< list<void*> > Table::filter(list<Condition*> *conditions) {
     list<Condition> cond_it;
     list< list< void* > >::iterator rows_iter = this->values.begin();
     list< list<void*> > filtered_rows;
     ColumnListType::iterator col_iter;
     while (rows_iter != this->values.end()) {
         bool row_valid = true;
-        list<Condition>::iterator cond_iter = conditions.begin();
-        while (cond_iter != conditions.end()) {
+        list<Condition*>::iterator cond_iter = conditions->begin();
+        while (cond_iter != conditions->end()) {
             col_iter = this->column_list.begin();
-            Condition condition = (*cond_iter);
+            Condition *condition = (*cond_iter);
             list< void* >::iterator val_iter = rows_iter->begin();
             cout << this->column_list.size() << rows_iter->size() << endl;
             while(col_iter != this->column_list.end() && val_iter != rows_iter->end()) {
-                if (!condition.column_name.compare(col_iter->first)) {
-                    if (cond_iter->condition == EQUALS) {
+                if (!condition->column_name.compare(col_iter->first)) {
+                    if ((*cond_iter)->condition == EQUALS) {
                         cout << "EQUALS " << endl;
                         if (col_iter->second == TEXT_TYPE) {
                             string *val = (string*)(*val_iter);
-                            cout << "checking " << *val << " EQUALS " << condition.value << endl;
-                            cout << !val->compare(condition.value) << endl;
-                            row_valid &= !val->compare(condition.value);
+                            cout << "checking " << *val << " EQUALS " << condition->value << endl;
+                            cout << !val->compare(condition->value) << endl;
+                            row_valid &= !val->compare(condition->value);
                         } else if (col_iter->second == INT_TYPE) {
                             int *val = (int*)(*val_iter);
-                            cout << "checking " << *val << " EQUALS " << condition.value << endl;
-                            cout << ((*val) == atoi(condition.value.c_str())) << endl;
-                            row_valid &= (*val) == atoi(condition.value.c_str());
+                            cout << "checking " << *val << " EQUALS " << condition->value << endl;
+                            cout << ((*val) == atoi(condition->value.c_str())) << endl;
+                            row_valid &= (*val) == atoi(condition->value.c_str());
                         } else
                             throw "Memory leak";
                     }
@@ -214,7 +214,7 @@ list< list<void*> > Table::filter(list<Condition> conditions) {
     return filtered_rows;
 }
 
-string Table::update(list<Condition> conditions, list<SetAction> setActions) {
+string Table::update(list<Condition*> *conditions, list<SetAction*> *setActions) {
     int update_count = 0;
     stringstream response;
     list<Condition> cond_it;
@@ -222,26 +222,26 @@ string Table::update(list<Condition> conditions, list<SetAction> setActions) {
     ColumnListType::iterator col_iter;
     while (rows_iter != this->values.end()) {
         bool row_valid = true;
-        list<Condition>::iterator cond_iter = conditions.begin();
-        while (cond_iter != conditions.end()) {
+        list<Condition* >::iterator cond_iter = conditions->begin();
+        while (cond_iter != conditions->end()) {
             col_iter = this->column_list.begin();
-            Condition condition = (*cond_iter);
+            Condition * condition = (*cond_iter);
             list< void* >::iterator val_iter = rows_iter->begin();
             cout << this->column_list.size() << rows_iter->size() << endl;
             while(col_iter != this->column_list.end() && val_iter != rows_iter->end()) {
-                if (!condition.column_name.compare(col_iter->first)) {
-                    if (cond_iter->condition == EQUALS) {
+                if (!condition->column_name.compare(col_iter->first)) {
+                    if ((*cond_iter)->condition == EQUALS) {
                         cout << "EQUALS " << endl;
                         if (col_iter->second == TEXT_TYPE) {
                             string *val = (string*)(*val_iter);
-                            cout << "checking " << *val << " EQUALS " << condition.value << endl;
-                            cout << !val->compare(condition.value) << endl;
-                            row_valid &= !val->compare(condition.value);
+                            cout << "checking " << *val << " EQUALS " << condition->value << endl;
+                            cout << !val->compare(condition->value) << endl;
+                            row_valid &= !val->compare(condition->value);
                         } else if (col_iter->second == INT_TYPE) {
                             int *val = (int*)(*val_iter);
-                            cout << "checking " << *val << " EQUALS " << condition.value << endl;
-                            cout << ((*val) == atoi(condition.value.c_str())) << endl;
-                            row_valid &= (*val) == atoi(condition.value.c_str());
+                            cout << "checking " << *val << " EQUALS " << condition->value << endl;
+                            cout << ((*val) == atoi(condition->value.c_str())) << endl;
+                            row_valid &= (*val) == atoi(condition->value.c_str());
                         } else
                             throw "type not defined";
                         update_count++;
@@ -253,24 +253,24 @@ string Table::update(list<Condition> conditions, list<SetAction> setActions) {
             cond_iter++;
         }
         if (row_valid) {
-            list<SetAction>::iterator action_iter = setActions.begin();
-            while (action_iter != setActions.end()) {
+            list<SetAction*>::iterator action_iter = setActions->begin();
+            while (action_iter != setActions->end()) {
                 col_iter = this->column_list.begin();
-                SetAction setAction = (*action_iter);
+                SetAction *setAction = (*action_iter);
                 list< void* >::iterator val_iter = rows_iter->begin();
                 cout << this->column_list.size() << rows_iter->size() << endl;
                 while(col_iter != this->column_list.end() && val_iter != rows_iter->end()) {
-                    if (!setAction.column_name.compare(col_iter->first)) {
+                    if (!setAction->column_name.compare(col_iter->first)) {
                         if (col_iter->second == TEXT_TYPE) {
                             string *val = (string*)(*val_iter);
-                            cout << "setting " << *val << " to " << setAction.value << endl;
+                            cout << "setting " << *val << " to " << setAction->value << endl;
                             delete val;
-                            (*val_iter) = new string(setAction.value);
+                            (*val_iter) = new string(setAction->value);
                         } else if (col_iter->second == INT_TYPE) {
                             int *val = (int*)(*val_iter);
-                            cout << "setting " << *val << " to " << setAction.value << endl;
+                            cout << "setting " << *val << " to " << setAction->value << endl;
                             delete val;
-                            (*val_iter) = new int(atoi(setAction.value.c_str()));
+                            (*val_iter) = new int(atoi(setAction->value.c_str()));
                         } else
                             throw "Memory leak";
                     }

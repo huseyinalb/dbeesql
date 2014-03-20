@@ -1,5 +1,5 @@
 cc= g++
-SRC_FILES= parser.cpp table.cpp lockmap.cpp updatequery.cpp
+SRC_FILES= parser.cpp table.cpp lockmap.cpp query.cpp
 TEST_SRC_FILES= test_create.cpp test_select.cpp test_table.cpp
 TEST_EXECS= $(TEST_SRC_FILES:%.cpp=%.out)
 OBJECTS= $(SRC_FILES:%.cpp=%.o)

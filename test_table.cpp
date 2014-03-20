@@ -18,13 +18,13 @@ int main(){
     table.create();
 
     
-    list < string > values;
+    list < string* > *values = new list<string*>;
 
-    string val2 = "val2";
-    values.push_back(val2);
+    string *val2 = new string("val2");
+    values->push_back(val2);
 
-    string val1 = "1";
-    values.push_back(val1);
+    string *val1 = new string("1");
+    values->push_back(val1);
     table.insert(values);
     table.suspend_content();
     
@@ -44,13 +44,13 @@ int main(){
     table2.fetch_content();
     cout << table2.values.front().size() << endl;
     assert(table2.values.front().size() == 2);
-    Condition condition1;
+    Condition *condition1= new Condition;
     
-    condition1.value = "val2";
-    condition1.condition = EQUALS;
-    condition1.column_name = "name";
-    list<Condition> conditions;
-    conditions.push_back(condition1);
+    condition1->value = "val2";
+    condition1->condition = EQUALS;
+    condition1->column_name = "name";
+    list<Condition*> *conditions = new list<Condition*>;
+    conditions->push_back(condition1);
     list< list<void*> > rows = table2.filter(conditions);
     assert(rows.size() == 1);
     val_it= rows.begin();
