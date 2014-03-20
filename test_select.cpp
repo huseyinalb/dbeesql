@@ -3,12 +3,12 @@
 
 int main(){
     try {
-    list<string> tokens = tokenize("insert into table_test values(deneme, 1);");
+    list<string> tokens = tokenize("insert into table_test values(\"some value\", 1);");
     Query *query = parse_insert(tokens);
     list<string*> *values = query->insert_values;
     assert(!query->table_name.compare("table_test"));
     list<string*>::iterator iter = values->begin();
-    assert(!(*iter)->compare("deneme"));
+    assert(!(*iter)->compare("some value"));
     iter++;
     
     assert(!(*iter)->compare("1"));
@@ -30,7 +30,7 @@ int main(){
     } catch (const char * message) {
         cout << message << endl;
     }
-    tokens = tokenize("update table_test set name = deneme1 where name = deneme;");
+    tokens = tokenize("update table_test set name = \"deneme1\" where name = \"some value\";");
     try {
         Query *query = parse_update(tokens);
         Table table(query->table_name);
@@ -42,7 +42,7 @@ int main(){
     } catch (const char * message) {
         cout << message << endl;
     }
-    tokens = tokenize("select * from table_test where name = deneme1;");
+    tokens = tokenize("select * from table_test where name = \"deneme1\";");
     try {
         Query *query = parse_select(tokens);
         Table table(query->table_name);

@@ -1,6 +1,6 @@
 
 #include "table.h"
-// TODO DESTROY!!!
+
 Table::Table(string tablename)
     {
         this->table_name = tablename;

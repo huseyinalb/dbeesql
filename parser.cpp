@@ -25,6 +25,18 @@ int is_ident(list<string>::iterator tok_iter, list<string>::iterator tok_end)
         return 1;
 }
 
+int is_num(list<string>::iterator tok_iter, list<string>::iterator tok_end) {
+    if (tok_iter != tok_end && (*tok_iter).size() > 0 && isnumber((*tok_iter)[0]))
+        return 1;
+    else {
+        if (tok_iter != tok_end) {
+            cout << "expected: num"<< endl;
+            cout << "got: " << *tok_iter << endl;
+        }
+        return 0;
+    }
+}
+
 int token_list_match(list<string>::iterator tok_iter, list<string>::iterator tok_end, ColumnListType match_list)
 {
     for (ColumnListType::iterator match_iter = match_list.begin(); match_iter != match_list.end(); match_iter++) {
@@ -43,6 +55,18 @@ ColumnListType get_types()
         type_list.push_back(pair<string, int>("text", TEXT_TYPE));
     }
     return type_list;
+}
+
+int is_text(list<string>::iterator tok_iter, list<string>::iterator tok_end) {
+    if (tok_iter != tok_end && (*tok_iter).size() > 1 && (*tok_iter)[0] == '\"')
+        return 1;
+    else {
+        if (tok_iter != tok_end) {
+            cout << "expected: text" << endl;
+            cout << "got: " << *tok_iter << endl;
+        }
+        return 0;
+    }
 }
 
 int get_type(list<string>::iterator tok_iter, list<string>::iterator tok_end)
@@ -81,7 +105,7 @@ int is_semicolon(list<string>::iterator tok_iter, list<string>::iterator tok_end
 list<string> tokenize(const string str)
 {
     // TODO will be refactored
-    boost::regex patterns("([A-Za-z_][A-Za-z0-9_]+|[0-9]+|\\s+|,|\\(|\\)|;|\\*|=|\\>|\\<)");
+    boost::regex patterns("([A-Za-z_][A-Za-z0-9_]+|[0-9]+|\\s+|,|\\(|\\)|;|\\*|=|\\>|\\<|\\\"[^\\\"]*\\\")");
     boost::match_results<std::string::const_iterator> what;
     boost::match_flag_type flags = boost::match_default;
     std::string::const_iterator start = str.begin();
@@ -146,10 +170,15 @@ Query* parse_insert(list<string> tokens)
         do {
             tok_iter++;
             string *column_value;
-            if(is_ident(tok_iter, tokens.end())) {
+            if(is_text(tok_iter, tokens.end())) {
+                column_value = new string((*tok_iter).substr(1, (*tok_iter).size()-2));
+                cout << "asdadssda" << endl;
+            } else if (is_num(tok_iter, tokens.end())){
                 column_value = new string(*tok_iter);
-            } else
+                cout << "asdadssda" << endl;
+            } else {
                 break;
+            }
             cout << *column_value << endl;
             insert_values->push_back(column_value);
             tok_iter++;
@@ -210,11 +239,16 @@ Query *parse_select(list<string> tokens) {
                     condition->condition = SMALLER;
             } else
                 throw "waiting for a condition";
+
             tok_iter++;
-            if(is_ident(tok_iter, tokens.end())) {
+            if(is_text(tok_iter, tokens.end())) {
+                condition->value = (*tok_iter).substr(1, (*tok_iter).size()-2);
+            } else if (is_num(tok_iter, tokens.end())){
                 condition->value = *tok_iter;
-            } else
-                throw "waiting for a condition value";
+            } else {
+                break;
+            }
+
             cout << condition->column_name << endl;
             tok_iter++;
             conditions->push_back(condition);
@@ -375,10 +409,13 @@ Query *parse_update(list<string> tokens) {
         if(!token_match(tok_iter, tokens.end(), "="))
             throw "waiting for \"=\"";
         tok_iter++;
-        if(is_ident(tok_iter, tokens.end())) {
+        if(is_text(tok_iter, tokens.end())) {
+            setAction->value = (*tok_iter).substr(1, (*tok_iter).size()-2);
+        } else if (is_num(tok_iter, tokens.end())){
             setAction->value = *tok_iter;
-        } else
-            throw "waiting for a value";
+        } else {
+            break;
+        }
         cout << setAction->column_name << endl;
         tok_iter++;
         setActions->push_back(setAction);
@@ -404,10 +441,13 @@ Query *parse_update(list<string> tokens) {
             } else
                 throw "waiting for a condition";
             tok_iter++;
-            if(is_ident(tok_iter, tokens.end())) {
+            if(is_text(tok_iter, tokens.end())) {
+                condition->value = (*tok_iter).substr(1, (*tok_iter).size()-2);
+            } else if (is_num(tok_iter, tokens.end())){
                 condition->value = *tok_iter;
-            } else
-                throw "waiting for a condition value";
+            } else {
+                break;
+            }
             cout << condition->column_name << endl;
             tok_iter++;
             conditions->push_back(condition);
