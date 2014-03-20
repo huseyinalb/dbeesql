@@ -145,6 +145,43 @@ int is_insert(list<string> tokens)
     return 1;
 }
 
+list<Condition*>* parse_where(list<string>::iterator& tok_iter, list<string>::iterator tok_end) {
+    list<Condition*>* conditions = new list<Condition*>;
+    if (token_match(tok_iter, tok_end, "where")) {
+        do {
+            tok_iter++;
+            Condition *condition = new Condition;
+            if(is_ident(tok_iter, tok_end)) {
+                condition->column_name = *tok_iter;
+            } else
+                throw "waiting for a column name";
+            cout << condition->column_name << endl;
+            tok_iter++;
+            if(is_condition(tok_iter, tok_end)) {
+                if (*tok_iter == "=")
+                    condition->condition = EQUALS;
+                else if (*tok_iter == ">")
+                    condition->condition = BIGGER;
+                else if (*tok_iter == "<")
+                    condition->condition = SMALLER;
+            } else
+                throw "waiting for a condition";
+            tok_iter++;
+            if(is_text(tok_iter, tok_end)) {
+                condition->value = (*tok_iter).substr(1, (*tok_iter).size()-2);
+            } else if (is_num(tok_iter, tok_end)){
+                condition->value = *tok_iter;
+            } else {
+                break;
+            }
+            cout << condition->column_name << endl;
+            tok_iter++;
+            conditions->push_back(condition);
+        } while (is_comma(tok_iter, tok_end));
+    }
+    return conditions;
+}
+
 Query* parse_insert(list<string> tokens)
 {
     // ignores if column_type and column_name is given wrong, should be fixed
@@ -220,40 +257,7 @@ Query *parse_select(list<string> tokens) {
         throw("no table name");
     table_name = *tok_iter;
     tok_iter++;
-    if (token_match(tok_iter, tokens.end(), "where")) {
-        do {
-            tok_iter++;
-            Condition *condition = new Condition;
-            if(is_ident(tok_iter, tokens.end())) {
-                condition->column_name = *tok_iter;
-            } else
-                throw "waiting for a column name";
-            cout << condition->column_name << endl;
-            tok_iter++;
-            if(is_condition(tok_iter, tokens.end())) {
-                if (*tok_iter == "=")
-                    condition->condition = EQUALS;
-                else if (*tok_iter == ">")
-                    condition->condition = BIGGER;
-                else if (*tok_iter == "<")
-                    condition->condition = SMALLER;
-            } else
-                throw "waiting for a condition";
-
-            tok_iter++;
-            if(is_text(tok_iter, tokens.end())) {
-                condition->value = (*tok_iter).substr(1, (*tok_iter).size()-2);
-            } else if (is_num(tok_iter, tokens.end())){
-                condition->value = *tok_iter;
-            } else {
-                break;
-            }
-
-            cout << condition->column_name << endl;
-            tok_iter++;
-            conditions->push_back(condition);
-        } while (is_comma(tok_iter, tokens.end()));
-    }
+    conditions = parse_where(tok_iter, tokens.end());
     if(!is_semicolon(tok_iter, tokens.end()))
        throw("no semicolumn");
     return new Query(table_name, conditions, (list<SetAction*>*)0);
@@ -421,38 +425,7 @@ Query *parse_update(list<string> tokens) {
         setActions->push_back(setAction);
     } while (is_comma(tok_iter, tokens.end()));
     
-    if (token_match(tok_iter, tokens.end(), "where")) {
-        do {
-            tok_iter++;
-            Condition *condition = new Condition;
-            if(is_ident(tok_iter, tokens.end())) {
-                condition->column_name = *tok_iter;
-            } else
-                throw "waiting for a column name";
-            cout << condition->column_name << endl;
-            tok_iter++;
-            if(is_condition(tok_iter, tokens.end())) {
-                if (*tok_iter == "=")
-                    condition->condition = EQUALS;
-                else if (*tok_iter == ">")
-                    condition->condition = BIGGER;
-                else if (*tok_iter == "<")
-                    condition->condition = SMALLER;
-            } else
-                throw "waiting for a condition";
-            tok_iter++;
-            if(is_text(tok_iter, tokens.end())) {
-                condition->value = (*tok_iter).substr(1, (*tok_iter).size()-2);
-            } else if (is_num(tok_iter, tokens.end())){
-                condition->value = *tok_iter;
-            } else {
-                break;
-            }
-            cout << condition->column_name << endl;
-            tok_iter++;
-            conditions->push_back(condition);
-        } while (is_comma(tok_iter, tokens.end()));
-    }
+    conditions = parse_where(tok_iter, tokens.end());
     if(!is_semicolon(tok_iter, tokens.end()))
         throw("no semicolumn");
     Table *table = new Table(table_name);
