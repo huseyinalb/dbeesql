@@ -1,7 +1,10 @@
 #ifndef __dbeesql__updatequery__
 #define __dbeesql__updatequery__
-#include "table.h"
 #include <list>
+#include <string>
+#include "condition.h"
+#include "set_actions.h"
+using namespace std;
 
 class Query
 {

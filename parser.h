@@ -31,5 +31,7 @@ string run_describe(Table& table);
 int is_update(list<string> tokens);
 Query *parse_update(list<string> tokens);
 string run_update(Table& table, Query* query);
-
+int is_remove(list<string> tokens);
+Query *parse_remove(list<string> tokens);
+string run_remove(Table& table, Query* query);
 #endif /* defined(__dbeesql__parser__) */

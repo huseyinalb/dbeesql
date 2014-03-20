@@ -85,6 +85,18 @@ string process(char* data)
                 response = message;
                 cout << message << endl;
             }
+        } else if (is_remove(tokens)){
+            query = parse_remove(tokens);
+            try {
+                LockMap::get_instance().lockWriteLock(query->table_name);
+                Table table(query->table_name);
+                response = run_remove(table, query);
+                LockMap::get_instance().unlockWriteLock(table.table_name);
+            } catch (const char * message) {
+                LockMap::get_instance().unlockWriteLock(query->table_name);
+                response = message;
+                cout << message << endl;
+            }
         } else if (is_update(tokens)){
             query = parse_update(tokens);
             try {

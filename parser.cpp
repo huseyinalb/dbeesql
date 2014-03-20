@@ -367,6 +367,35 @@ string parse_drop(list<string> tokens)
     return table_name;
 }
 
+int is_remove(list<string> tokens) {
+    list<string>::iterator tok_iter = tokens.begin();
+    if (!token_match(tok_iter, tokens.end(), "remove"))
+        return 0;
+    return 1;
+}
+
+Query *parse_remove(list<string> tokens) {
+    std::string table_name;
+    ColumnListType column_list;
+    list<Condition*> *conditions = new list<Condition*>;
+    list<string>::iterator tok_iter = tokens.begin();
+    // is_remove
+    tok_iter++;
+    if (!token_match(tok_iter, tokens.end(), "from"))
+        throw("waiting for from");
+    tok_iter++;
+    if (!is_ident(tok_iter, tokens.end()))
+        throw("no table name");
+    table_name = *tok_iter;
+    tok_iter++;
+    conditions = parse_where(tok_iter, tokens.end());
+    if(!is_semicolon(tok_iter, tokens.end()))
+        throw("no semicolumn");
+    return new Query(table_name, conditions, (list<SetAction*>*)0);
+}
+
+
+
 int is_describe(list<string> tokens)
 {
     list<string>::iterator tok_iter = tokens.begin();
@@ -453,10 +482,18 @@ Query *parse_update(list<string> tokens) {
     return new Query(table_name, conditions, setActions);
 }
 
+string run_remove(Table& table, Query* query)
+{
+    table.fetch_content();
+    string response = table.process_according_rows(query, remove_row);
+    table.suspend_content();
+    return response;
+}
+
 string run_update(Table& table, Query* query)
 {
     table.fetch_content();
-    string response = table.update(query->conditions, query->setActions);
+    string response = table.process_according_rows(query, update_row);
     table.suspend_content();
     return response;
 }

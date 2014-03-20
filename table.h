@@ -11,6 +11,7 @@
 #include "condition.h"
 #include <cstdlib>
 #include "set_actions.h"
+#include "query.h"
 
 using namespace std;
 
@@ -32,10 +33,12 @@ public:
     void insert(list<string*>* values);
     string describe();
     list< list< void* > > filter(list<Condition*> *conditions);
-    string update(list<Condition*> *conditions, list<SetAction*> *setActions);
+    string process_according_rows(Query *query, list< list< void* > >::iterator (*process_row)(Table*, Query*, list< list< void* > >::iterator));
     string print_rows(list< list< void* > >);
     ~Table();
     void suspend_content();
     int drop();
 };
+list< list< void* > >::iterator remove_row(Table* table, Query* query, list< list< void* > >::iterator rows_iter);
+list< list< void* > >::iterator update_row(Table* table, Query* query, list< list< void* > >::iterator rows_iter);
 #endif /* defined(__dbeesql__table__) */

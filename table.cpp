@@ -207,7 +207,7 @@ list< list<void*> > Table::filter(list<Condition*> *conditions) {
                             #ifdef DEBUG
                             cout << "checking " << *val << " EQUALS " << condition->value << endl;
                             cout << ((*val) == atoi(condition->value.c_str())) << endl;
-                            #endif DEBUG
+                            #endif
                             row_valid &= (*val) == atoi(condition->value.c_str());
                         } else
                             throw "Memory leak";
@@ -226,7 +226,42 @@ list< list<void*> > Table::filter(list<Condition*> *conditions) {
     return filtered_rows;
 }
 
-string Table::update(list<Condition*> *conditions, list<SetAction*> *setActions) {
+list< list< void* > >::iterator update_row(Table* table, Query* query, list< list< void* > >::iterator rows_iter) {
+    list<SetAction*>::iterator action_iter = query->setActions->begin();
+    while (action_iter != query->setActions->end()) {
+        ColumnListType::iterator col_iter = table->column_list.begin();
+        SetAction *setAction = (*action_iter);
+        list< void* >::iterator val_iter = rows_iter->begin();
+        while(col_iter != table->column_list.end() && val_iter != rows_iter->end()) {
+            if (!setAction->column_name.compare(col_iter->first)) {
+                if (col_iter->second == TEXT_TYPE) {
+                    string *val = (string*)(*val_iter);
+                    #ifdef DEBUG
+                    cout << "setting " << *val << " to " << setAction->value << endl;
+                    #endif
+                    delete val;
+                    (*val_iter) = new string(setAction->value);
+                } else if (col_iter->second == INT_TYPE) {
+                    int *val = (int*)(*val_iter);
+                    #ifdef DEBUG
+                    cout << "setting " << *val << " to " << setAction->value << endl;
+                    #endif
+                    delete val;
+                    (*val_iter) = new int(atoi(setAction->value.c_str()));
+                } else
+                    throw "Memory leak";
+            }
+            col_iter++;
+            val_iter++;
+        }
+        action_iter++;
+    }
+    return ++rows_iter;
+}
+list< list< void* > >::iterator remove_row(Table* table, Query* query, list< list< void* > >::iterator rows_iter) {
+    return table->values.erase(rows_iter);
+}
+string Table::process_according_rows(Query *query, list< list< void* > >::iterator (*process_row)(Table* table, Query*, list< list< void* > >::iterator)) {
     int update_count = 0;
     stringstream response;
     list<Condition> cond_it;
@@ -234,8 +269,8 @@ string Table::update(list<Condition*> *conditions, list<SetAction*> *setActions)
     ColumnListType::iterator col_iter;
     while (rows_iter != this->values.end()) {
         bool row_valid = true;
-        list<Condition* >::iterator cond_iter = conditions->begin();
-        while (cond_iter != conditions->end()) {
+        list<Condition* >::iterator cond_iter = query->conditions->begin();
+        while (cond_iter != query->conditions->end()) {
             col_iter = this->column_list.begin();
             Condition * condition = (*cond_iter);
             list< void* >::iterator val_iter = rows_iter->begin();
@@ -269,38 +304,10 @@ string Table::update(list<Condition*> *conditions, list<SetAction*> *setActions)
             }
             cond_iter++;
         }
-        if (row_valid) {
-            list<SetAction*>::iterator action_iter = setActions->begin();
-            while (action_iter != setActions->end()) {
-                col_iter = this->column_list.begin();
-                SetAction *setAction = (*action_iter);
-                list< void* >::iterator val_iter = rows_iter->begin();
-                while(col_iter != this->column_list.end() && val_iter != rows_iter->end()) {
-                    if (!setAction->column_name.compare(col_iter->first)) {
-                        if (col_iter->second == TEXT_TYPE) {
-                            string *val = (string*)(*val_iter);
-                            #ifdef DEBUG
-                            cout << "setting " << *val << " to " << setAction->value << endl;
-                            #endif
-                            delete val;
-                            (*val_iter) = new string(setAction->value);
-                        } else if (col_iter->second == INT_TYPE) {
-                            int *val = (int*)(*val_iter);
-                            #ifdef DEBUG
-                            cout << "setting " << *val << " to " << setAction->value << endl;
-                            #endif
-                            delete val;
-                            (*val_iter) = new int(atoi(setAction->value.c_str()));
-                        } else
-                            throw "Memory leak";
-                    }
-                    col_iter++;
-                    val_iter++;
-                }
-                action_iter++;
-            }
-        }
-        rows_iter++;
+        if (row_valid)
+            rows_iter = process_row(this, query, rows_iter);
+        else
+            rows_iter++;
     }
     return response.str();
 }
