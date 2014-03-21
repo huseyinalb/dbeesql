@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include "set_actions.h"
 #include "query.h"
+#include <set>
 
 using namespace std;
 
@@ -34,7 +35,7 @@ public:
     string describe();
     list< list< void* > > filter(list<Condition*> *conditions);
     string process_according_rows(Query *query, list< list< void* > >::iterator (*process_row)(Table*, Query*, list< list< void* > >::iterator));
-    string print_rows(list< list< void* > >);
+    string print_rows(list< list< void* > >, list<string*>* column_names);
     ~Table();
     void suspend_content();
     int drop();

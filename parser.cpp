@@ -257,6 +257,29 @@ int is_select(list<string> tokens)
     return 1;
 }
 
+
+list<string*> *parse_column_names(list<string>::iterator& tok_iter, list<string>::iterator tok_end) {
+    list<string*> *column_names = new list<string*>;
+    if (token_match(tok_iter, tok_end, "from"))
+        throw "waiting for a column name";
+    if (token_match(tok_iter, tok_end, "*")) {
+        tok_iter++;
+        return column_names;
+    }
+    tok_iter--;
+    do {
+        tok_iter++;
+        if(!is_ident(tok_iter, tok_end))
+            throw "waiting for a column name";
+#ifdef DEBUG
+        cout << *tok_iter << endl;
+#endif
+        column_names->push_back(new string(*tok_iter));
+        tok_iter++;
+    } while (is_comma(tok_iter, tok_end));
+    return column_names;
+}
+
 Query *parse_select(list<string> tokens) {
     std::string table_name;
     ColumnListType column_list;
@@ -264,21 +287,22 @@ Query *parse_select(list<string> tokens) {
     list<string>::iterator tok_iter = tokens.begin();
     // is_select
     tok_iter++;
-    if (!token_match(tok_iter, tokens.end(), "*"))
-        throw("not select *");
-    tok_iter++;
+    list<string*> *column_names = parse_column_names(tok_iter, tokens.end());
     if (!token_match(tok_iter, tokens.end(), "from"))
-        throw("waiting for from");
+        throw "waiting for from";
     tok_iter++;
     if (!is_ident(tok_iter, tokens.end()))
         throw("no table name");
     table_name = *tok_iter;
     tok_iter++;
     conditions = parse_where(tok_iter, tokens.end());
+
     if(!is_semicolon(tok_iter, tokens.end()))
        throw("no semicolumn");
-    return new Query(table_name, conditions, (list<SetAction*>*)0);
+    Query * query = new Query(table_name, conditions, column_names);
+    return query;
 }
+
 
 Table parse_create(list<string> tokens)
 {
@@ -516,5 +540,5 @@ string run_select(Table& table, Query* query)
 {
     table.fetch_content();
     list< list<void*> > rows = table.filter(query->conditions);
-    return table.print_rows(rows);
+    return table.print_rows(rows, query->column_names);
 }

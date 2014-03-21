@@ -137,19 +137,30 @@ void Table::insert(list<string*>* values) {
     this->values.push_back(row);
 }
 
-string Table::print_rows(list< list< void*> > rows) {
+string Table::print_rows(list< list< void*> > rows, list<string*>*column_names) {
+    set<string> column_names_set;
+    list<string*>::iterator col_name_it = column_names->begin();
+    while(col_name_it != column_names->end()){
+        column_names_set.insert(*(*col_name_it));
+        col_name_it++;
+    }
     stringstream response;
-    ColumnListType::iterator col_iter = this->column_list.begin();
-    while(col_iter != this->column_list.end()) {
+    for(ColumnListType::iterator col_iter = this->column_list.begin();
+            col_iter != this->column_list.end();col_iter++) {
+        if (column_names->size() != 0 && column_names_set.find(col_iter->first) == column_names_set.end()){
+            continue;
+        }
         response << col_iter->first << " : ";
-        col_iter++;
     }
     response << endl;
-    list< list< void* > >::iterator rows_iter = rows.begin();
-    while (rows_iter != rows.end()) {
-        list< void* >::iterator val_iter = rows_iter->begin();
-        col_iter = this->column_list.begin();
-        while(col_iter != this->column_list.end() && val_iter != rows_iter->end()) {
+    for (list< list< void* > >::iterator rows_iter = rows.begin(); rows_iter != rows.end(); rows_iter++) {
+        ColumnListType::iterator col_iter = this->column_list.begin();
+        for(list< void* >::iterator val_iter = rows_iter->begin();
+                col_iter != this->column_list.end() && val_iter != rows_iter->end();
+                col_iter++, val_iter++) {
+            if (column_names->size() != 0 && column_names_set.find(col_iter->first) == column_names_set.end()){
+                continue;
+            }
             if (col_iter->second == TEXT_TYPE) {
                 string *val = (string*)(*val_iter);
                 response << (*val) << " : ";
@@ -158,10 +169,7 @@ string Table::print_rows(list< list< void*> > rows) {
                 response << (*val) << " : ";
             } else
                 return "Type error";
-            col_iter++;
-            val_iter++;
         }
-        rows_iter++;
         response << endl;
     }
     return response.str();
@@ -178,6 +186,7 @@ string Table::describe() {
 }
 
 list< list<void*> > Table::filter(list<Condition*> *conditions) {
+    
     list<Condition> cond_it;
     list< list< void* > >::iterator rows_iter = this->values.begin();
     list< list<void*> > filtered_rows;

@@ -26,6 +26,8 @@ echo -e "update hede set name = \"deneme1\" where name = \"some value\";"| nc lo
 
 echo -e "select * from hede where name = \"deneme1\";"| nc localhost 8080
 
+echo -e "select name from hede where name = \"deneme1\";"| nc localhost 8080
+
 echo -e "remove from hede where name = \"deneme1\";"| nc localhost 8080
 
 echo "drop table hede;"| nc localhost 8080

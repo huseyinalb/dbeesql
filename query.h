@@ -13,6 +13,8 @@ public:
     list<Condition*> *conditions;
     list<SetAction*> *setActions;
     list<string *> *insert_values;
+    list<string *> *column_names;
+    Query(string table_name, list<Condition*> *conditions, list<string*> *column_names);
     Query(string table_name, list<Condition*> *conditions, list<SetAction*> *setActions);
     Query(string table_name, list<string*>* insert_values);
     ~Query();

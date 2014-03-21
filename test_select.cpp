@@ -42,7 +42,7 @@ int main(){
     } catch (const char * message) {
         cout << message << endl;
     }
-    tokens = tokenize("select * from table_test where name = \"deneme1\";");
+    tokens = tokenize("select name, num from table_test where name = \"deneme1\";");
     try {
         Query *query = parse_select(tokens);
         Table table(query->table_name);
