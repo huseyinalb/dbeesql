@@ -3,9 +3,6 @@ dbeesql
 
 A db server written in cpp
 
-Currently only create table, describe table, drop table is implemented
-types are not implemented yet, they are only strings that are shown to user
-
 To try:
 
 install boost libraries
